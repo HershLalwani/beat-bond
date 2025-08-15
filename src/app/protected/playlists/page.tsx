@@ -14,6 +14,16 @@ interface Playlist {
   name: string;
   tracks: string[];
 }
+interface TrackInfo {
+  id: string;
+  name: string;
+  artists: { name: string }[];
+
+  album: {
+    name: string;
+    images: { url: string }[];
+  };
+}
 
 const PlaylistsPage = () => {
   const { user } = useUser();
@@ -28,7 +38,30 @@ const PlaylistsPage = () => {
   }
 
   // Fetch the playlist
-  const playlists = useQuery(api.playlists.getRecentPlaylist, {userID: userID});
+  const playlists = useQuery(api.playlists.getRecentPlaylist, { userID: userID });
+
+  const [trackDetails, setTrackDetails] = useState<TrackInfo[]>([]);
+  const fetchTrackDetails = async () => {
+    if (!selectedPlaylist) return;
+    if (selectedPlaylist && selectedPlaylist.tracks.length > 0) {
+      try {
+        // Use multiple track IDs in a single request
+        const trackIds = selectedPlaylist.tracks.join(",");
+        const response = await fetch(`/api/trackinfo?trackIds=${trackIds}`);
+
+        if (!response.ok) {
+          console.error("Failed to fetch track details");
+          return;
+        }
+
+        const data = await response.json();
+        setTrackDetails(data.tracks);
+      } catch (error) {
+        console.error("Error fetching track details:", error);
+      }
+    }
+  };
+  fetchTrackDetails();
 
   const handleExportToSpotify = async () => {
     if (!selectedPlaylist) return;
@@ -87,11 +120,10 @@ const PlaylistsPage = () => {
         {playlists && (
           <div className="space-y-2">
             <h2 className="text-lg font-semibold text-gray-300">Saved Playlist</h2>
-            <Card 
-              key={playlists._id} 
-              className={`p-4 bg-gray-800/50 border-gray-700 hover:bg-gray-700/50 cursor-pointer transition-colors ${
-                selectedPlaylist?._id === playlists._id ? 'ring-2 ring-cyan-500' : ''
-              }`}
+            <Card
+              key={playlists._id}
+              className={`p-4 bg-gray-800/50 border-gray-700 hover:bg-gray-700/50 cursor-pointer transition-colors ${selectedPlaylist?._id === playlists._id ? 'ring-2 ring-cyan-500' : ''
+                }`}
               onClick={() => setSelectedPlaylist(playlists)}
             >
               <div className="flex justify-between items-center">
@@ -115,14 +147,14 @@ const PlaylistsPage = () => {
                 {selectedPlaylist.name}
               </h2>
               <div className="flex gap-2">
-                <Button 
-                  onClick={handleExportToSpotify} 
+                <Button
+                  onClick={handleExportToSpotify}
                   className="flex items-center gap-2"
                 >
                   <DownloadIcon className="w-4 h-4" />
                   Export to Spotify
                 </Button>
-                <Button 
+                <Button
                   variant="destructive"
                   className="flex items-center gap-2"
                   onClick={handleDelPlaylistButton}
@@ -136,12 +168,40 @@ const PlaylistsPage = () => {
             <div className="space-y-2">
               <h3 className="text-lg font-semibold text-gray-400">Tracks</h3>
               {selectedPlaylist.tracks.map((trackId, index) => (
-                <Card 
+                <Card
                   key={trackId}
-                  className="p-2 bg-gray-800/50 border-gray-700 hover:bg-gray-700/50 transition-colors"
+                  className="p-3 bg-gray-800/50 border-gray-700 hover:bg-gray-700/50 transition-colors"
                 >
-                  <div className="flex items-center justify-between">
-                    <span className="text-gray-300">{index + 1}. {trackId}</span>
+                  <div className="flex items-center gap-3">
+                  <span className="text-gray-500 text-sm w-6">{index + 1}.</span>
+                  {trackDetails.length > 0 && trackDetails[index] ? (
+                    <div className="flex items-center gap-3 flex-1">
+                    {trackDetails[index].album.images[0] && (
+                      <img
+                      src={trackDetails[index].album.images[0].url}
+                      alt={trackDetails[index].album.name}
+                      className="w-12 h-12 rounded object-cover"
+                      />
+                    )}
+                    <div className="flex-1">
+                      <h4 className="text-gray-300 font-medium">{trackDetails[index].name}</h4>
+                      <p className="text-gray-400 text-sm">
+                      {trackDetails[index].artists.map(artist => artist.name).join(', ')}
+                      </p>
+                      <p className="text-gray-500 text-xs">{trackDetails[index].album.name}</p>
+                    </div>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-3 flex-1">
+                    <div className="w-12 h-12 bg-gray-700 rounded flex items-center justify-center">
+                      <MusicIcon className="w-6 h-6 text-gray-500" />
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-gray-400">Loading track info...</p>
+                      <p className="text-gray-500 text-xs">{trackId}</p>
+                    </div>
+                    </div>
+                  )}
                   </div>
                 </Card>
               ))}

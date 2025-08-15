@@ -114,7 +114,7 @@ const RecommendationsPage = () => {
 
         {data && (
           <>
-            <ShadInput className="max-w-80 text-black" value={playlistName} onChange={(e) => handleInputChange(e.target.value)} placeholder="Search users..."/>
+            <ShadInput className="max-w-80 text-black" value={playlistName} onChange={(e) => handleInputChange(e.target.value)} placeholder="Name Playlist..."/>
             <Button 
               onClick={handleSavePlaylist}
               disabled={isSaving}
@@ -169,10 +169,10 @@ const RecommendationsPage = () => {
       )}
 
       {data && (
-        <div className="space-y-6">
-          <div className="space-y-3">
+        <div className="flex w-full justify-between gap-4">
+          <div className="space-y-3 w-1/2 rounded-md bg-gray-800/50 border-gray-700 p-4">
             <h1 className="text-xl font-semibold text-gray-400">Top Tracks</h1>
-            <div className="grid gap-2">
+            <div className="grid gap-2 max-h-[600px] overflow-y-auto">
               {data.topTracks.map((track) => (
                 <Card
                   key={track.id}
@@ -211,9 +211,9 @@ const RecommendationsPage = () => {
             </div>
           </div>
 
-          <div className="space-y-3">
+          <div className="space-y-3 w-1/2 rounded-md bg-gray-800/50 border-gray-700 p-4">
             <h1 className="text-xl font-semibold text-gray-400">Recommended Tracks</h1>
-            <div className="grid gap-2">
+            <div className="grid gap-2 max-h-[600px] overflow-y-auto">
               {data.recommendations.map((track) => (
                 <Card
                   key={track.id}
